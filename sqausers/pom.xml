@@ -76,8 +76,9 @@
 	<dependency>
     	<groupId>com.microsoft.sqlserver</groupId>
     	<artifactId>mssql-jdbc</artifactId>
-    	<scope>runtime</scope>
+    	<version>8.4.1.jre8</version>
 	</dependency>
+
 
 	
   </dependencies>
