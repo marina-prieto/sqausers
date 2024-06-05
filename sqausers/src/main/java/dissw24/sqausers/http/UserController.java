@@ -21,41 +21,43 @@ import dissw24.sqausers.model.CredencialesRegistro;
 import dissw24.sqausers.model.User;
 import dissw24.sqausers.services.UserService;
 
-//latest version
 @RestController
 @RequestMapping("users")
 @CrossOrigin("*")
 public class UserController {
 	
 	@Autowired
-	private UserService UserService;
+	private UserService userService;
 
 	@PostMapping("/registrar")
-	public void registrar(@RequestBody CredencialesRegistro cr) {
+	public Map<String, String> registrar(@RequestBody CredencialesRegistro cr) {
 		cr.comprobar();
 		
 		User user = new User();
 		user.setEmail(cr.getEmail());
 		user.setPwd(cr.getPwd1());
 		
-		this.UserService.registrar(user);
+		this.userService.registrar(user);
+		
+		Map<String, String> result = new HashMap<>();
+		result.put("message", "User registered successfully");
+		return result;
 	}
 	
 	@PutMapping("/login")
 	public Map<String, String> login(@RequestBody User user) {
 		Map<String, String> result = new HashMap<>();
-		result.put("token", this.UserService.login(user));
+		result.put("token", this.userService.login(user));
 		return result;
 	}
 	
-	@GetMapping("/validarToken")
-	public void validarToken(@RequestParam String token) {
-		this.UserService.validarToken(token);
-	}
+	//@GetMapping("/validarToken")
+	//public void validarToken(@RequestParam String token) {
+	//	this.UserService.validarToken(token);
+	//}
 	
-	@GetMapping("/validarToken2/{token}")
-	public void validarToken2(@PathVariable String token) {
-		this.UserService.validarToken(token);
-	}
-	
+	//@GetMapping("/validarToken2/{token}")
+	//public void validarToken2(@PathVariable String token) {
+	//	this.UserService.validarToken(token);
+	//}
 }

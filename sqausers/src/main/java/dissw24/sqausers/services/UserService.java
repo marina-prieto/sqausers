@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -14,7 +15,6 @@ import dissw24.sqausers.dao.UserDAO;
 import dissw24.sqausers.model.Token;
 import dissw24.sqausers.model.User;
 
-//latest version
 @Service
 public class UserService {
 
@@ -24,16 +24,19 @@ public class UserService {
 	private Map<String, User> users = new HashMap<>();
 	private Map<String, Token> tokens = new HashMap<>();
 	
+	private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+	
 	public void registrar(User user) {
+		user.setPwd(passwordEncoder.encode(user.getPwd()));
 		this.userDao.save(user);
 	}
 	
 	public String login(User user) {
-		
-		Optional<User> optUser = this.userDao.findByEmailAndPwd(user.getEmail(), user.getPwd());
-		if(!optUser.isPresent()) { //deberia ser optUser.isEmpty()???
+		Optional<User> optUser = this.userDao.findByEmail(user.getEmail());
+		if(!optUser.isPresent() || !passwordEncoder.matches(user.getPwd(), optUser.get().getPwd())) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "CREDENCIALES INVALIDAS");
 		}
+		
 		user = optUser.get();
 		if (this.users.get(user.getID()) != null) {
 			this.tokens.remove(user.getToken().getId());
@@ -53,11 +56,11 @@ public class UserService {
 		if (token == null) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "SE ESTÁ INTENTANDO COLAR EN EL SISTEMA");
 		}
-		if (token.caducado()) {
+		if (token.isExpired()) {
 			this.tokens.remove(idToken);
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "EL TOKEN HA EXPIRADO");
 		}
-		token.incrementarTiempo();
+		token.extendExpiryTime();
 	}
 }
 
