@@ -49,21 +49,21 @@ public class UserService {
 	
 	public String login(User user) {
 		Optional<User> optUser = this.userDao.findByEmail(user.getEmail());
-		if(!optUser.isPresent() || !passwordEncoder.matches(user.getPwd(), optUser.get().getPwd())) {
+		if (!optUser.isPresent() || !passwordEncoder.matches(user.getPwd(), optUser.get().getPwd())) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Credenciales inválidas");
 		}
 		
 		user = optUser.get();
-		if (this.users.get(user.getID()) != null) {
+		// Invalidar el token existente si el usuario ya tiene uno
+		if (user.getToken() != null) {
 			this.tokens.remove(user.getToken().getId());
-			user.setToken(null);
 		}
-		this.users.put(user.getID(), user);
-		
+		// Generar un nuevo token
 		String idToken = UUID.randomUUID().toString();
 		Token token = new Token(idToken, user);
 		this.tokens.put(idToken, token);
 		user.setToken(token);
+		this.users.put(user.getID(), user);  // Actualizar el mapa de usuarios
 		return token.getId();
 	}
 	
@@ -118,5 +118,3 @@ public class UserService {
         return this.tokens.get(idToken);
     }
 }
-
-//crear recurso login, que vea si el usuario existe en la lista, si no da forbidden 403. Manejo de tokens de usuario???
