@@ -62,6 +62,10 @@ public class UserService {
 		}
 		token.extendExpiryTime();
 	}
+	
+	public Token getToken(String idToken) {
+        return this.tokens.get(idToken);
+    }
 }
 
 //crear recurso login, que vea si el usuario existe en la lista, si no da forbidden 403. Manejo de tokens de usuario???

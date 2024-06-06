@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -15,12 +16,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-            .csrf().disable() // deshabilitar CSRF para pruebas, no recomendado en producción
+            .csrf().disable()
             .authorizeRequests()
-                .antMatchers("/users/registrar", "/users/login").permitAll() // permitir acceso a estos endpoints
+                .antMatchers("/users/registrar", "/users/login").permitAll()
                 .anyRequest().authenticated()
             .and()
-            .formLogin().disable(); // deshabilitar el formulario de login por defecto
+            .addFilterBefore(new TokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean
