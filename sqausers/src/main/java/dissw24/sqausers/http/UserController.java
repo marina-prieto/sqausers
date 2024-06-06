@@ -31,7 +31,7 @@ public class UserController {
 	@Autowired
 	private UserService userService;
 
-	@PostMapping("/registrar")
+	@PostMapping("/register")
 	public Map<String, String> registrar(@RequestBody CredencialesRegistro cr) {
 		cr.comprobar();
 		
@@ -42,7 +42,7 @@ public class UserController {
 		this.userService.registrar(user);
 		
 		Map<String, String> result = new HashMap<>();
-		result.put("message", "User registered successfully");
+		result.put("message", "Usuario registrado correctamente");
 		return result;
 	}
 	
@@ -57,10 +57,10 @@ public class UserController {
     public Map<String, String> requestPasswordReset(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         User user = userService.findByEmail(email)
-                               .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                               .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
         userService.createPasswordResetToken(user);
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Password reset email sent");
+        response.put("message", "Correo de cambio de contraseña enviado");
         return response;
     }
 
@@ -70,7 +70,7 @@ public class UserController {
         String newPassword = request.get("newPassword");
         userService.resetPassword(token, newPassword);
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Password reset successful");
+        response.put("message", "Contraseña cambiada correctamente");
         return response;
     }
 }

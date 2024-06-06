@@ -50,7 +50,7 @@ public class UserService {
 	public String login(User user) {
 		Optional<User> optUser = this.userDao.findByEmail(user.getEmail());
 		if(!optUser.isPresent() || !passwordEncoder.matches(user.getPwd(), optUser.get().getPwd())) {
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "CREDENCIALES INVALIDAS");
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Credenciales inválidas");
 		}
 		
 		user = optUser.get();
@@ -82,17 +82,17 @@ public class UserService {
         mailMessage.setTo(user.getEmail());
         mailMessage.setFrom(fromEmail);
         mailMessage.setSubject("Cambiar Contraseña");
-        mailMessage.setText("To reset your password, click the link below:\n" 
+        mailMessage.setText("Haga click en el siguiente enlace para cambiar su contraseña:\n" 
                 + "http://localhost:4200/reset-password?token=" + token);
         mailSender.send(mailMessage);
     }
 
 	public void resetPassword(String token, String newPassword) {
         PasswordResetToken resetToken = tokenDao.findByToken(token)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token inválida"));
 
         if (resetToken.isExpired()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token has expired");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token expirada");
         }
 
         User user = resetToken.getUser();
@@ -105,11 +105,11 @@ public class UserService {
 	public void validarToken(String idToken) {
 		Token token = this.tokens.get(idToken);
 		if (token == null) {
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "SE ESTÁ INTENTANDO COLAR EN EL SISTEMA");
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Se está intentando colar");
 		}
 		if (token.isExpired()) {
 			this.tokens.remove(idToken);
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "EL TOKEN HA EXPIRADO");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token expirado");
 		}
 		token.extendExpiryTime();
 	}

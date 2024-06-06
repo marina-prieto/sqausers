@@ -46,15 +46,14 @@ public class CredencialesRegistro {
         if (!pwd1.equals(pwd2)) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Las contraseñas no coinciden");
         }
-        if (pwd1.length() < 4) {
+        if (pwd1.length() < 7) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "La contraseña es muy corta");
         }
         if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "El formato del correo electrónico no es válido");
         }
-        // Validación adicional para la complejidad de la contraseña (opcional)
         if (!isPasswordComplex(pwd1)) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "La contraseña debe contener al menos un número, una letra mayúscula, una letra minúscula y un carácter especial");
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "La contraseña debe contener al menos un número, una letra mayúscula, una letra minúscula y un carácter especial (@#$%^&+=)");
         }
     }
 	
