@@ -3,15 +3,22 @@ package dissw24.sqausers.services;
 import java.util.UUID;
 import java.util.Map;
 import java.util.Optional;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import dissw24.sqausers.dao.PasswordResetTokenDAO;
 import dissw24.sqausers.dao.UserDAO;
+import dissw24.sqausers.model.PasswordResetToken;
 import dissw24.sqausers.model.Token;
 import dissw24.sqausers.model.User;
 
@@ -20,6 +27,15 @@ public class UserService {
 
 	@Autowired
 	private UserDAO userDao;
+	
+	@Autowired
+    private PasswordResetTokenDAO tokenDao;
+	
+	@Autowired
+    private JavaMailSender mailSender;
+	
+	@Value("${spring.mail.username}")
+    private String fromEmail;
 	
 	private Map<String, User> users = new HashMap<>();
 	private Map<String, Token> tokens = new HashMap<>();
@@ -50,7 +66,42 @@ public class UserService {
 		user.setToken(token);
 		return token.getId();
 	}
+	
+	public Optional<User> findByEmail(String email) {
+        return userDao.findByEmail(email);
+    }
+	
+	public void createPasswordResetToken(User user) {
+        String token = UUID.randomUUID().toString();
+        Instant expiry = Instant.now().plus(1, ChronoUnit.HOURS);
+        PasswordResetToken resetToken = new PasswordResetToken(user, token, expiry);
+        tokenDao.save(resetToken);
 
+        // Logic to send the token via email
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(user.getEmail());
+        mailMessage.setFrom(fromEmail);
+        mailMessage.setSubject("Cambiar Contraseña");
+        mailMessage.setText("To reset your password, click the link below:\n" 
+                + "http://localhost:4200/reset-password?token=" + token);
+        mailSender.send(mailMessage);
+    }
+
+	public void resetPassword(String token, String newPassword) {
+        PasswordResetToken resetToken = tokenDao.findByToken(token)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token"));
+
+        if (resetToken.isExpired()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token has expired");
+        }
+
+        User user = resetToken.getUser();
+        user.setPwd(passwordEncoder.encode(newPassword));
+        userDao.save(user);
+
+        tokenDao.delete(resetToken);
+    }
+	
 	public void validarToken(String idToken) {
 		Token token = this.tokens.get(idToken);
 		if (token == null) {
