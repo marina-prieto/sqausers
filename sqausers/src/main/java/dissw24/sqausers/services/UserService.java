@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -43,9 +44,12 @@ public class UserService {
 	private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 	
 	public void registrar(User user) {
-		user.setPwd(passwordEncoder.encode(user.getPwd()));
-		this.userDao.save(user);
-	}
+        if (userDao.findByEmail(user.getEmail()).isPresent()) {
+            throw new DataIntegrityViolationException("Usuario ya registrado. Inicie sesión");
+        }
+        user.setPwd(passwordEncoder.encode(user.getPwd()));
+        this.userDao.save(user);
+    }
 	
 	public String login(User user) {
 		Optional<User> optUser = this.userDao.findByEmail(user.getEmail());

@@ -7,6 +7,7 @@ import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +43,12 @@ public class UserController {
 		this.userService.registrar(user);
 		
 		Map<String, String> result = new HashMap<>();
-		result.put("message", "Usuario registrado correctamente");
+		try {
+	        this.userService.registrar(user);
+	        result.put("message", "Usuario registrado correctamente");
+	    } catch (DataIntegrityViolationException e) {
+	        result.put("message", "Usuario ya registrado. Inicie sesión");
+	    }
 		return result;
 	}
 	
