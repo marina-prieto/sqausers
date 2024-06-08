@@ -26,62 +26,62 @@ import dissw24.sqausers.model.User;
 @Service
 public class UserService {
 
-	@Autowired
-	private UserDAO userDao;
-	
-	@Autowired
+    @Autowired
+    private UserDAO userDao;
+
+    @Autowired
     private PasswordResetTokenDAO tokenDao;
-	
-	@Autowired
+
+    @Autowired
     private JavaMailSender mailSender;
-	
-	@Value("${spring.mail.username}")
+
+    @Value("${spring.mail.username}")
     private String fromEmail;
-	
-	private Map<String, User> users = new HashMap<>();
-	private Map<String, Token> tokens = new HashMap<>();
-	
-	private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-	
-	public void registrar(User user) {
+
+    private Map<String, User> users = new HashMap<>();
+    private Map<String, Token> tokens = new HashMap<>();
+
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    public void registrar(User user) {
         if (userDao.findByEmail(user.getEmail()).isPresent()) {
             throw new DataIntegrityViolationException("Usuario ya registrado. Inicie sesión");
         }
         user.setPwd(passwordEncoder.encode(user.getPwd()));
         this.userDao.save(user);
     }
-	
-	public String login(User user) {
-		Optional<User> optUser = this.userDao.findByEmail(user.getEmail());
-		if (!optUser.isPresent() || !passwordEncoder.matches(user.getPwd(), optUser.get().getPwd())) {
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Credenciales inválidas");
-		}
-		
-		user = optUser.get();
-		// Invalidar el token existente si el usuario ya tiene uno
-		if (user.getToken() != null) {
-			this.tokens.remove(user.getToken().getId());
-		}
-		// Generar un nuevo token
-		String idToken = UUID.randomUUID().toString();
-		Token token = new Token(idToken, user);
-		this.tokens.put(idToken, token);
-		user.setToken(token);
-		this.users.put(user.getID(), user);  // Actualizar el mapa de usuarios
-		return token.getId();
-	}
-	
-	public Optional<User> findByEmail(String email) {
+
+    public String login(User user) {
+        Optional<User> optUser = this.userDao.findByEmail(user.getEmail());
+        if (!optUser.isPresent() || !passwordEncoder.matches(user.getPwd(), optUser.get().getPwd())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Credenciales inválidas");
+        }
+
+        user = optUser.get();
+        // Invalidar el token existente si el usuario ya tiene uno
+        if (user.getToken() != null) {
+            this.tokens.remove(user.getToken().getId());
+        }
+        // Generar un nuevo token
+        String idToken = UUID.randomUUID().toString();
+        Token token = new Token(idToken, user);
+        this.tokens.put(idToken, token);
+        user.setToken(token);
+        this.users.put(user.getID(), user);  // Actualizar el mapa de usuarios
+        return token.getId();
+    }
+
+    public Optional<User> findByEmail(String email) {
         return userDao.findByEmail(email);
     }
-	
-	public void createPasswordResetToken(User user) {
+
+    public void createPasswordResetToken(User user) {
         String token = UUID.randomUUID().toString();
         Instant expiry = Instant.now().plus(1, ChronoUnit.HOURS);
         PasswordResetToken resetToken = new PasswordResetToken(user, token, expiry);
         tokenDao.save(resetToken);
 
-        // Logic to send the token via email
+        // Enviar el token por correo electrónico
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setTo(user.getEmail());
         mailMessage.setFrom(fromEmail);
@@ -91,7 +91,7 @@ public class UserService {
         mailSender.send(mailMessage);
     }
 
-	public void resetPassword(String token, String newPassword) {
+    public void resetPassword(String token, String newPassword) {
         PasswordResetToken resetToken = tokenDao.findByToken(token)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token inválida"));
 
@@ -105,20 +105,25 @@ public class UserService {
 
         tokenDao.delete(resetToken);
     }
-	
-	public void validarToken(String idToken) {
-		Token token = this.tokens.get(idToken);
-		if (token == null) {
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Se está intentando colar");
-		}
-		if (token.isExpired()) {
-			this.tokens.remove(idToken);
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token expirado");
-		}
-		token.extendExpiryTime();
-	}
-	
-	public Token getToken(String idToken) {
+
+    public void validarToken(String idToken) {
+        Token token = this.tokens.get(idToken);
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Token no encontrado");
+        }
+        if (token.isExpired()) {
+            this.tokens.remove(idToken);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token expirado");
+        }
+        token.extendExpiryTime();
+    }
+
+    public boolean validaToken(String idToken) {
+        Token token = this.tokens.get(idToken);
+        return token != null && !token.isExpired();
+    }
+
+    public Token getToken(String idToken) {
         return this.tokens.get(idToken);
     }
 }

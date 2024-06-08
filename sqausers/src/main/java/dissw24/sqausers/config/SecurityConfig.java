@@ -20,7 +20,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/users/register", 
                 		     "/users/login", 
                 		     "/users/reset-password-request", 
-                		     "/users/reset-password").permitAll()
+                		     "/users/reset-password",
+                		     "/users/validarToken").permitAll()
                 .anyRequest().authenticated()
             .and()
             .formLogin().disable();
