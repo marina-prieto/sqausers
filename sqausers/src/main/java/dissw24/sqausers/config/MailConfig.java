@@ -1,4 +1,3 @@
-// MailConfig.java
 package dissw24.sqausers.config;
 
 import org.springframework.context.annotation.Bean;
